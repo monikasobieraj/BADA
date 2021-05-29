@@ -1,0 +1,144 @@
+---
+title: "graph_for_Bada"
+author: "Monika Sobieraj"
+date: "29/05/2021"
+output: html_document
+---
+
+Jak bedziesz sie chciala kiedys pobawic to mozesz to wkleic w okno na gorze po lewej 
+i zeby ci zadzialalo to klikasz ctrl+enter w kazdym wierszu :)
+
+# INSTALOWANIE POTRZEBNYVH PAKIETOW - MOZE TROCHE ZAJAC
+
+```{r echo=TRUE}
+if(!require("tidyverse"))install.packages("tidyverse") #data package
+if(!require("dplyr"))install.packages("dplyr") #data package
+if(!require("tidyr"))install.packages("tidyr") #data package
+if(!require("ggplot2"))install.packages("ggplot2") #making beautiful graphs
+if(!require("tibble"))install.packages("tibble") #wrangling data and making tibbles
+if(!require("plotly"))install.packages("plotly") #interactive plots
+if(!require("htmlwidgets"))install.packages("htmlwidgets") #saving interactive plots
+
+#LADOWANIE PAKIETOW####
+#musisz to zrobic zeby powiedziec R ze bedziesz z tego korzystac
+
+library(tidyverse)
+library(plyr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(tibble)
+library(plotly)
+library(htmlwidgets)
+library(lubridate)
+```
+# KODOWANIE
+
+# Czyste Dane
+
+```{r}
+dane <- read.csv("dane.csv") #wczytanie danych
+
+
+dane200 <- dane %>%
+  filter(dane$dlugosc == "200") #filtrujemy ze chcemy tylko te na 200 metrow
+
+dane100 <- dane %>% 
+  filter(dane$dlugosc == "100") #filtrujemy ze chcemy tylko te na 100 metrow
+
+dane100$wynik <- as.numeric(dane100$wynik) #mowimy zeby wyniki byly czytane jako liczby a nie tekst
+dane200$wynik <- as.numeric(dane200$wynik)
+dane200$rok <- as.numeric(dane200$rok)
+dane100$rok <- as.numeric(dane100$rok)
+
+
+max_val <- max(dane$wynik)  #szukamy najwyzszej wartosci, przyda sie pozniej :)
+```
+# 200 metrow
+
+```{r}
+ggplot(dane200, mapping = aes(x = rok, y = wynik, col = zawody))+   #robimy wykresik
+  geom_line(size = 1.2, alpha=0.4)+                                 #rozmiar = 1.3 i przezroczystosc 0.4 - wykres liniowy
+  geom_point()+                                                     #punkciki na liniach 
+  ggtitle("Wyniki pływania motylem na 200 metrów") +                #tytul wykresu
+  ylab(label = "Wynik")+                                #podpis y 
+  theme_minimal()+                                                  #lubie ten styl i ma biale tlo i nie musisz wszystkiego zmieniac sama
+  guides(col=guide_legend("Typ Zawodów"))+                          #legenda
+  scale_y_continuous(labels = function(y) paste0("01:",y,".0"), breaks = seq(0, max_val, by = 1))+ #to bylo ciezkie, ogolnie to usunelam te minute i przed sekundami wstamiam "1:", i potem dodaje ".0", plus ustawiam przerwe pomiedzy podpisem jako jedna wartosc
+  scale_x_continuous("Rok", labels = as.character(dane$rok), breaks = dane$rok)+ #tak znalazlam zeby pokazalo wszystkie roki na x
+  theme(panel.grid.minor = element_blank(), title = element_text(size = 15))                         # a tu usunelam zbedne linie pionowe 
+```
+
+# 100 metrow
+
+```{r}
+ggplot(dane100, mapping = aes(x = rok, y = wynik, col = zawody))+
+  geom_line(size = 1.2, alpha=0.4)+
+  geom_point()+
+  ggtitle("Wyniki pływania motylem na 100 metrów") +
+  ylab(label = "Wynik")+
+  theme_minimal()+
+  guides(col=guide_legend("Typ Zawodów"))+
+  scale_y_continuous(labels = function(y) paste0("00:",y))+
+  scale_x_continuous("Rok", labels = as.character(dane$rok), breaks = dane$rok)+
+  theme(panel.grid.minor = element_blank(), title = element_text(size = 15))
+```
+
+# BAWIE SIE W INTERAKTYWNE
+
+```{r}
+g1 <- dane %>%
+  mutate(text=paste("Czas: ",(dane$wynik), "\nRok: ",(dane$rok), "\nZawody: ", 
+                    (dane$zawody),"\nDystans: ",(dane$dlugosc), "\nPozycja: ",(dane$pozycja), sep="")) %>%
+  ggplot(dane100, mapping = aes(x = rok, y = wynik, col = zawody, text=text))+
+  geom_line(size = 1.2, alpha=0.4)+
+  geom_point()+
+  ggtitle("Wyniki pływania motylem na 100 metrów") +
+  ylab(label = "Wynik")+
+  theme_minimal()+
+  guides(col=guide_legend("Typ Zawodów"))+
+  scale_y_continuous(labels = function(y) paste0("00:",y))+
+  scale_x_continuous("Rok", labels = as.character(dane$rok), breaks = dane$rok)+
+  theme(panel.grid.minor = element_blank(), title = element_text(size = 15))
+
+p1 <- ggplotly(g1, tooltip="text") 
+p1
+```
+
+```{r}
+g2 <- dane100 %>%
+  mutate(text=paste("Czas: ",(dane100$wynik), "\nRok: ",(dane100$rok), "\nZawody: ", 
+                    (dane100$zawody),"\nPozycja: ",(dane100$pozycja),sep="")) %>%
+  ggplot(dane100, mapping = aes(x = rok, y = wynik, col = zawody, text=text))+
+  geom_line(size = 1.2, alpha=0.4)+
+  geom_point()+
+  ggtitle("Wyniki pływania motylem na 100 metrów") +
+  ylab(label = "Wynik")+
+  theme_minimal()+
+  guides(col=guide_legend("Typ Zawodów"))+
+  scale_y_continuous(labels = function(y) paste0("00:",y))+
+  scale_x_continuous("Rok", labels = as.character(dane$rok), breaks = dane$rok)+
+  theme(panel.grid.minor = element_blank(), title = element_text(size = 15))
+
+p2 <- ggplotly(g2, tooltip="text") 
+p2
+```
+
+
+```{r}
+g3 <- dane200 %>%
+  mutate(text=paste("Czas: ",(dane200$wynik), "\nRok: ",(dane200$rok), "\nZawody: ",      (dane200$zawody),"\nPozycja: ",(dane200$pozycja),sep="")) %>%
+  ggplot(dane100, mapping = aes(x = rok, y = wynik, col = zawody, text=text))+
+  geom_line(size = 1.2, alpha=0.4)+
+  geom_point()+
+  ggtitle("Wyniki pływania motylem na 100 metrów") +
+  ylab(label = "Wynik")+
+  theme_minimal()+
+  guides(col=guide_legend("Typ Zawodów"))+
+  scale_y_continuous(labels = function(y) paste0("00:",y))+
+  scale_x_continuous("Rok", labels = as.character(dane$rok), breaks = dane$rok)+
+  theme(panel.grid.minor = element_blank(), title = element_text(size = 15))
+
+p3 <- ggplotly(g3, tooltip="text") 
+p3
+```
